@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\ConductorAuthController;
 use App\Http\Controllers\Api\RutaApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,9 @@ use Illuminate\Support\Facades\Route;
 | Todas las rutas tienen el prefijo /api y responden en JSON.
 |
 */
+
+Route::post('/conductor/login', [ConductorAuthController::class, 'login']);
+Route::post('/conductor/logout', [ConductorAuthController::class, 'logout']);
 
 Route::prefix('rutas')->group(function () {
     // GET    /api/rutas          → Listar todas las rutas

@@ -18,6 +18,9 @@ class DatabaseSeeder extends Seeder
         // Llamar al seeder de rutas de Zitácuaro
         $this->call(RutaSeeder::class);
 
+        // Crear conductores de prueba (1 por ruta)
+        $this->call(ConductorSeeder::class);
+
         User::firstOrCreate(
             ['email' => 'test@example.com'],
             [

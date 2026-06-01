@@ -2,21 +2,26 @@
 
 namespace App\WebSocket;
 
+use App\Models\Conductor;
+use App\Models\Location;
 use Workerman\Connection\TcpConnection;
-use Workerman\Protocols\Http\Request;
 
 /**
- * Handler de WebSocket para recibir datos de ubicación en tiempo real.
+ * Handler de WebSocket para ubicaciones en tiempo real con autenticación
+ * de conductores y suscripción de usuarios por color de ruta.
  *
- * Recibe JSON desde dispositivos remotos con la estructura:
- * {
- *   "latitud": 19.4326077,
- *   "longitud": -99.1332080,
- *   "orientacion": 180.50,
- *   "velocidad": 45.30
- * }
+ * Protocolo:
  *
- * Por ahora solo imprime los datos recibidos en la consola del servidor.
+ * --- CONDUCTOR ---
+ * 1. Auth:       → { "type": "auth", "token": "..." }
+ *                ← { "type": "auth_ok", "conductor_id": 1, "color": "...", "num_combi": 123 }
+ * 2. Location:   → { "type": "location", "latitud": 19.43, "longitud": -99.13, "orientacion": 180.5, "velocidad": 45.3 }
+ *                ← { "type": "location_ack", "success": true }
+ *
+ * --- USUARIO (PASAJERO) ---
+ * 1. Subscribe:  → { "type": "subscribe", "colors": ["#FFFF00 - Amarilla...", "#FF0000 - Roja..."] }
+ *                ← { "type": "subscribed", "colors": [...] }
+ * 2. Recibe:     ← { "type": "location_update", "color": "...", "num_combi": 123, "latitud": 19.43, ... }
  */
 class LocationHandler
 {
@@ -25,6 +30,13 @@ class LocationHandler
      */
     public static function onConnect(TcpConnection $connection): void
     {
+        $connection->isDriver = false;
+        $connection->conductorId = null;
+        $connection->conductorRutaId = null;
+        $connection->conductorColor = null;
+        $connection->conductorNumCombi = null;
+        $connection->subscribedColors = [];
+
         $clientId = $connection->id;
         echo "\n┌─────────────────────────────────────────┐\n";
         echo "│  ✅ Nueva conexión: Cliente #{$clientId}         │\n";
@@ -34,106 +46,48 @@ class LocationHandler
 
     /**
      * Se ejecuta cuando se recibe un mensaje del cliente.
-     *
-     * Espera un JSON con: latitud, longitud, orientacion, velocidad.
      */
     public static function onMessage(TcpConnection $connection, $data): void
     {
         $clientId = $connection->id;
         $timestamp = date('Y-m-d H:i:s');
 
-        // Decodificar JSON
-        $location = json_decode($data, true);
+        $message = json_decode($data, true);
 
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $errorMsg = json_encode([
-                'success' => false,
-                'message' => 'JSON inválido: ' . json_last_error_msg(),
-            ]);
-            $connection->send($errorMsg);
-            echo "[{$timestamp}] ❌ Cliente #{$clientId} - JSON inválido: {$data}\n";
+        if (json_last_error() !== JSON_ERROR_NONE || !isset($message['type'])) {
+            $connection->send(json_encode([
+                'type' => 'error',
+                'message' => 'JSON inválido o falta el campo "type".',
+            ]));
+            echo "[{$timestamp}] ❌ Cliente #{$clientId} - Mensaje inválido: {$data}\n";
             return;
         }
 
-        // Validar campos requeridos
-        $camposRequeridos = ['latitud', 'longitud', 'orientacion', 'velocidad'];
-        $camposFaltantes = [];
+        switch ($message['type']) {
+            case 'auth':
+                self::handleAuth($connection, $message, $timestamp);
+                break;
 
-        foreach ($camposRequeridos as $campo) {
-            if (!isset($location[$campo])) {
-                $camposFaltantes[] = $campo;
-            }
-        }
+            case 'location':
+                self::handleLocation($connection, $message, $timestamp);
+                break;
 
-        if (!empty($camposFaltantes)) {
-            $errorMsg = json_encode([
-                'success' => false,
-                'message' => 'Campos faltantes: ' . implode(', ', $camposFaltantes),
-            ]);
-            $connection->send($errorMsg);
-            echo "[{$timestamp}] ❌ Cliente #{$clientId} - Campos faltantes: " . implode(', ', $camposFaltantes) . "\n";
-            return;
-        }
+            case 'subscribe':
+                self::handleSubscribe($connection, $message, $timestamp);
+                break;
 
-        // Validar rangos
-        $errors = [];
-        if ($location['latitud'] < -90 || $location['latitud'] > 90) {
-            $errors[] = 'latitud debe estar entre -90 y 90';
-        }
-        if ($location['longitud'] < -180 || $location['longitud'] > 180) {
-            $errors[] = 'longitud debe estar entre -180 y 180';
-        }
-        if ($location['orientacion'] < 0 || $location['orientacion'] > 360) {
-            $errors[] = 'orientacion debe estar entre 0 y 360';
-        }
-        if ($location['velocidad'] < 0) {
-            $errors[] = 'velocidad no puede ser negativa';
-        }
+            case 'unsubscribe':
+                self::handleUnsubscribe($connection, $message, $timestamp);
+                break;
 
-        if (!empty($errors)) {
-            $errorMsg = json_encode([
-                'success' => false,
-                'message' => 'Errores de validación',
-                'errors' => $errors,
-            ]);
-            $connection->send($errorMsg);
-            echo "[{$timestamp}] ❌ Cliente #{$clientId} - Validación: " . implode(', ', $errors) . "\n";
-            return;
+            default:
+                $connection->send(json_encode([
+                    'type' => 'error',
+                    'message' => "Tipo de mensaje desconocido: {$message['type']}",
+                ]));
+                echo "[{$timestamp}] ❌ Cliente #{$clientId} - Tipo desconocido: {$message['type']}\n";
+                break;
         }
-
-        // Imprimir en consola
-        echo "\n[{$timestamp}] 📍 Location recibida - Cliente #{$clientId}\n";
-        echo "   ├─ Latitud:      {$location['latitud']}\n";
-        echo "   ├─ Longitud:     {$location['longitud']}\n";
-        echo "   ├─ Orientación:  {$location['orientacion']}°\n";
-        echo "   └─ Velocidad:    {$location['velocidad']} km/h\n";
-
-        // Transmitir (Broadcast) a todos los demás clientes conectados (ej. usuarios viendo el mapa)
-        if (isset($connection->worker) && isset($connection->worker->connections)) {
-            $broadcastData = json_encode([
-                'type' => 'location_update',
-                'client_id' => $clientId,
-                'latitud' => $location['latitud'],
-                'longitud' => $location['longitud'],
-                'orientacion' => $location['orientacion'],
-                'velocidad' => $location['velocidad'],
-                'timestamp' => $timestamp
-            ]);
-
-            foreach ($connection->worker->connections as $con) {
-                if ($con->id !== $clientId) {
-                    $con->send($broadcastData);
-                }
-            }
-        }
-
-        // Responder confirmación al cliente remitente
-        $response = json_encode([
-            'success' => true,
-            'message' => 'Location recibida correctamente.',
-            'timestamp' => $timestamp,
-        ]);
-        $connection->send($response);
     }
 
     /**
@@ -142,7 +96,13 @@ class LocationHandler
     public static function onClose(TcpConnection $connection): void
     {
         $clientId = $connection->id;
-        echo "[" . date('Y-m-d H:i:s') . "] 🔌 Cliente #{$clientId} desconectado.\n";
+        $role = !empty($connection->isDriver) ? "Conductor (Combi #{$connection->conductorNumCombi})" : "Usuario";
+
+        echo "[" . date('Y-m-d H:i:s') . "] 🔌 {$role} - Cliente #{$clientId} desconectado.\n";
+
+        if (!empty($connection->isDriver) && !empty($connection->conductorColor)) {
+            self::notifyDriverDisconnected($connection);
+        }
     }
 
     /**
@@ -152,5 +112,312 @@ class LocationHandler
     {
         $clientId = $connection->id;
         echo "[" . date('Y-m-d H:i:s') . "] ⚠️  Error en Cliente #{$clientId}: [{$code}] {$msg}\n";
+    }
+
+    // ──────────────────────────────────────────────
+    //  HANDLERS DE MENSAJES
+    // ──────────────────────────────────────────────
+
+    /**
+     * Maneja la autenticación de un conductor.
+     *
+     * Espera: { "type": "auth", "token": "..." }
+     */
+    private static function handleAuth(TcpConnection $connection, array $message, string $timestamp): void
+    {
+        $clientId = $connection->id;
+
+        if (empty($message['token'])) {
+            $connection->send(json_encode([
+                'type' => 'auth_error',
+                'message' => 'Token requerido.',
+            ]));
+            echo "[{$timestamp}] ❌ Cliente #{$clientId} - Auth sin token\n";
+            return;
+        }
+
+        $conductor = self::resolveApp($connection, function () use ($message) {
+            return Conductor::findByToken($message['token']);
+        });
+
+        if (!$conductor) {
+            $connection->send(json_encode([
+                'type' => 'auth_error',
+                'message' => 'Token inválido o expirado.',
+            ]));
+            echo "[{$timestamp}] ❌ Cliente #{$clientId} - Token inválido\n";
+            return;
+        }
+
+        $ruta = $conductor->ruta;
+
+        // Marcar conexión como conductor autenticado
+        $connection->isDriver = true;
+        $connection->conductorId = $conductor->id;
+        $connection->conductorRutaId = $conductor->ruta_id;
+        $connection->conductorColor = $ruta->color;
+        $connection->conductorNumCombi = $conductor->num_combi;
+
+        $connection->send(json_encode([
+            'type' => 'auth_ok',
+            'message' => 'Autenticado correctamente.',
+            'conductor_id' => $conductor->id,
+            'color' => $ruta->color,
+            'num_combi' => $conductor->num_combi,
+        ]));
+
+        echo "[{$timestamp}] 🔑 Conductor autenticado - Cliente #{$clientId}\n";
+        echo "   ├─ Conductor ID: {$conductor->id} ({$conductor->nombre} {$conductor->apellido})\n";
+        echo "   ├─ Color:        {$ruta->color}\n";
+        echo "   └─ Combi #:      {$conductor->num_combi}\n";
+    }
+
+    /**
+     * Maneja una ubicación enviada por un conductor autenticado.
+     *
+     * Espera: { "type": "location", "latitud": 19.43, "longitud": -99.13, "orientacion": 180.5, "velocidad": 45.3 }
+     */
+    private static function handleLocation(TcpConnection $connection, array $message, string $timestamp): void
+    {
+        $clientId = $connection->id;
+
+        // 🔒 VERIFICACIÓN DE AUTENTICACIÓN
+        if (empty($connection->isDriver)) {
+            $connection->send(json_encode([
+                'type' => 'error',
+                'message' => 'No autenticado. Debes enviar un mensaje de autenticación primero.',
+            ]));
+            echo "[{$timestamp}] 🚫 Cliente #{$clientId} - Intento de enviar location sin autenticación\n";
+            return;
+        }
+
+        $campos = ['latitud', 'longitud', 'orientacion', 'velocidad'];
+        $faltantes = [];
+
+        foreach ($campos as $campo) {
+            if (!isset($message[$campo])) {
+                $faltantes[] = $campo;
+            }
+        }
+
+        if (!empty($faltantes)) {
+            $connection->send(json_encode([
+                'type' => 'error',
+                'message' => 'Campos faltantes: ' . implode(', ', $faltantes),
+            ]));
+            return;
+        }
+
+        // Validar rangos
+        $errors = [];
+        if ($message['latitud'] < -90 || $message['latitud'] > 90) {
+            $errors[] = 'latitud debe estar entre -90 y 90';
+        }
+        if ($message['longitud'] < -180 || $message['longitud'] > 180) {
+            $errors[] = 'longitud debe estar entre -180 y 180';
+        }
+        if ($message['orientacion'] < 0 || $message['orientacion'] > 360) {
+            $errors[] = 'orientacion debe estar entre 0 y 360';
+        }
+        if ($message['velocidad'] < 0) {
+            $errors[] = 'velocidad no puede ser negativa';
+        }
+
+        if (!empty($errors)) {
+            $connection->send(json_encode([
+                'type' => 'error',
+                'message' => 'Errores de validación',
+                'errors' => $errors,
+            ]));
+            return;
+        }
+
+        $latitud = (float) $message['latitud'];
+        $longitud = (float) $message['longitud'];
+        $orientacion = (float) $message['orientacion'];
+        $velocidad = (float) $message['velocidad'];
+        $color = $connection->conductorColor;
+        $numCombi = $connection->conductorNumCombi;
+
+        // Imprimir en consola
+        echo "\n[{$timestamp}] 📍 Location - Conductor #{$connection->conductorId} (Combi #{$numCombi})\n";
+        echo "   ├─ Color:        {$color}\n";
+        echo "   ├─ Latitud:      {$latitud}\n";
+        echo "   ├─ Longitud:     {$longitud}\n";
+        echo "   ├─ Orientación:  {$orientacion}°\n";
+        echo "   └─ Velocidad:    {$velocidad} km/h\n";
+
+        // Persistir en base de datos
+        self::resolveApp($connection, function () use ($connection, $latitud, $longitud, $orientacion, $velocidad, $color, $numCombi) {
+            Location::create([
+                'conductor_id' => $connection->conductorId,
+                'ruta_id' => $connection->conductorRutaId,
+                'num_combi' => $numCombi,
+                'color' => $color,
+                'latitud' => $latitud,
+                'longitud' => $longitud,
+                'orientacion' => $orientacion,
+                'velocidad' => $velocidad,
+            ]);
+        });
+
+        // Transmitir SOLO a usuarios suscritos a este color
+        $broadcastData = json_encode([
+            'type' => 'location_update',
+            'conductor_id' => $connection->conductorId,
+            'color' => $color,
+            'num_combi' => $numCombi,
+            'latitud' => $latitud,
+            'longitud' => $longitud,
+            'orientacion' => $orientacion,
+            'velocidad' => $velocidad,
+            'timestamp' => $timestamp,
+        ]);
+
+        $receptores = 0;
+
+        if (isset($connection->worker->connections)) {
+            foreach ($connection->worker->connections as $con) {
+                // Solo enviar a usuarios suscritos a este color (no al propio conductor)
+                if ($con->id !== $clientId
+                    && empty($con->isDriver)
+                    && !empty($con->subscribedColors)
+                    && in_array($color, $con->subscribedColors, true)
+                ) {
+                    $con->send($broadcastData);
+                    $receptores++;
+                }
+            }
+        }
+
+        echo "   └─ Broadcast a {$receptores} usuario(s) suscrito(s) a este color\n";
+
+        // Confirmar al conductor
+        $connection->send(json_encode([
+            'type' => 'location_ack',
+            'success' => true,
+            'message' => 'Ubicación recibida y transmitida.',
+            'receptores' => $receptores,
+            'timestamp' => $timestamp,
+        ]));
+    }
+
+    /**
+     * Maneja la suscripción de un usuario a uno o más colores de ruta.
+     *
+     * Espera: { "type": "subscribe", "colors": ["#FFFF00 - Amarilla...", "#FF0000 - Roja..."] }
+     */
+    private static function handleSubscribe(TcpConnection $connection, array $message, string $timestamp): void
+    {
+        $clientId = $connection->id;
+
+        if (empty($message['colors']) || !is_array($message['colors'])) {
+            $connection->send(json_encode([
+                'type' => 'error',
+                'message' => 'El campo "colors" debe ser un arreglo de colores.',
+            ]));
+            return;
+        }
+
+        $currentColors = $connection->subscribedColors ?? [];
+        $newColors = array_unique(array_merge($currentColors, $message['colors']));
+        $connection->subscribedColors = $newColors;
+
+        $connection->send(json_encode([
+            'type' => 'subscribed',
+            'message' => 'Suscripción actualizada.',
+            'colors' => $newColors,
+        ]));
+
+        echo "[{$timestamp}] 📬 Usuario #{$clientId} suscrito a " . count($message['colors']) . " color(es)\n";
+        echo "   └─ Colores: " . implode(', ', $message['colors']) . "\n";
+    }
+
+    /**
+     * Maneja la desuscripción de un usuario de uno o más colores.
+     *
+     * Espera: { "type": "unsubscribe", "colors": ["#FFFF00 - Amarilla..."] }
+     */
+    private static function handleUnsubscribe(TcpConnection $connection, array $message, string $timestamp): void
+    {
+        $clientId = $connection->id;
+
+        if (empty($message['colors']) || !is_array($message['colors'])) {
+            $connection->send(json_encode([
+                'type' => 'error',
+                'message' => 'El campo "colors" debe ser un arreglo de colores.',
+            ]));
+            return;
+        }
+
+        $currentColors = $connection->subscribedColors ?? [];
+        $updatedColors = array_values(array_diff($currentColors, $message['colors']));
+        $connection->subscribedColors = $updatedColors;
+
+        $connection->send(json_encode([
+            'type' => 'unsubscribed',
+            'message' => 'Desuscripción exitosa.',
+            'colors' => $updatedColors,
+        ]));
+
+        echo "[{$timestamp}] 📭 Usuario #{$clientId} desuscrito de " . count($message['colors']) . " color(es)\n";
+    }
+
+    // ──────────────────────────────────────────────
+    //  HELPERS
+    // ──────────────────────────────────────────────
+
+    /**
+     * Ejecuta un callback con la aplicación de Laravel disponible,
+     * manejando reconexión de base de datos si es necesario.
+     */
+    private static function resolveApp(TcpConnection $connection, callable $callback): mixed
+    {
+        $app = $connection->worker->laravelApp ?? null;
+
+        if (!$app) {
+            return null;
+        }
+
+        try {
+            // Reconnect DB if connection was lost (Workerman long-running process)
+            $db = $app->make('db');
+            try {
+                $db->getPdo();
+            } catch (\Exception $e) {
+                $db->reconnect();
+            }
+        } catch (\Exception $e) {
+            // DB not available, continue anyway (broadcast still works)
+        }
+
+        return $callback();
+    }
+
+    /**
+     * Notifica a los usuarios suscritos que un conductor se ha desconectado.
+     */
+    private static function notifyDriverDisconnected(TcpConnection $connection): void
+    {
+        $notification = json_encode([
+            'type' => 'driver_disconnected',
+            'conductor_id' => $connection->conductorId,
+            'color' => $connection->conductorColor,
+            'num_combi' => $connection->conductorNumCombi,
+            'timestamp' => date('Y-m-d H:i:s'),
+        ]);
+
+        $color = $connection->conductorColor;
+
+        if (isset($connection->worker->connections)) {
+            foreach ($connection->worker->connections as $con) {
+                if (empty($con->isDriver)
+                    && !empty($con->subscribedColors)
+                    && in_array($color, $con->subscribedColors, true)
+                ) {
+                    $con->send($notification);
+                }
+            }
+        }
     }
 }

@@ -10,9 +10,9 @@ use Workerman\Worker;
  * Comando Artisan para iniciar el servidor WebSocket de ubicaciones.
  *
  * Uso:
- *   php artisan websocket:serve              → Inicia en ws://0.0.0.0:8080
- *   php artisan websocket:serve --port=9090  → Inicia en puerto personalizado
- *   php artisan websocket:serve --host=127.0.0.1 → Solo conexiones locales
+ *   php artisan websocket:serve              -> Inicia en ws://0.0.0.0:8080
+ *   php artisan websocket:serve --port=9090  -> Inicia en puerto personalizado
+ *   php artisan websocket:serve --host=127.0.0.1 -> Solo conexiones locales
  */
 class WebSocketServeCommand extends Command
 {
@@ -46,7 +46,8 @@ class WebSocketServeCommand extends Command
         $this->info('╠═══════════════════════════════════════════╣');
         $this->info("║  Escuchando en: ws://{$host}:{$port}      ");
         $this->info('║  Protocolo:     WebSocket                 ║');
-        $this->info('║  Modelo:        Location                  ║');
+        $this->info('║  Autenticación: Token de conductor        ║');
+        $this->info('║  Suscripciones: Por color de ruta         ║');
         $this->info('╠═══════════════════════════════════════════╣');
         $this->info('║  Esperando conexiones de dispositivos...  ║');
         $this->info('╚═══════════════════════════════════════════╝');
@@ -62,6 +63,17 @@ class WebSocketServeCommand extends Command
 
         // Un solo proceso (suficiente para desarrollo local)
         $worker->count = 1;
+
+        // Bootstrap de Laravel dentro del proceso Worker
+        // Esto permite usar modelos, DB, etc. desde LocationHandler
+        $laravelApp = $this->laravel;
+        $worker->onWorkerStart = function ($worker) use ($laravelApp) {
+            // Compartir la aplicación de Laravel con el Worker
+            $worker->laravelApp = $laravelApp;
+
+            echo "\n✅ Laravel bootstrapeado en proceso Worker #{$worker->id}\n";
+            echo "   Modelos, DB y servicios disponibles en LocationHandler.\n\n";
+        };
 
         // Registrar callbacks del handler
         $worker->onConnect = [LocationHandler::class, 'onConnect'];

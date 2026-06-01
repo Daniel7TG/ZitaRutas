@@ -14,8 +14,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * @property int $id
  * @property int $ruta_id
- * @property string $name
- * @property string $identifier
+ * @property string $time
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  *
@@ -38,8 +37,7 @@ class Horario extends Model
      */
     protected $fillable = [
         'ruta_id',
-        'name',
-        'identifier',
+        'time',
     ];
 
     /**
@@ -49,7 +47,9 @@ class Horario extends Model
      */
     protected function casts(): array
     {
-        return [];
+        return [
+            'time' => 'datetime:h:ia', // Automatically formats to 7:00am etc. when serialized or cast
+        ];
     }
 
     /**
