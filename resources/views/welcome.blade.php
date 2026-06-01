@@ -114,8 +114,8 @@
     @endphp
 
     <!-- ==============================================
-                                                         PANTALLA 1: BIENVENIDA / LANDING (welcome)
-                                                         ============================================== -->
+        PANTALLA 1: BIENVENIDA / LANDING (welcome)
+        ============================================== -->
     @if ($activeScreen == 'welcome')
         <div class="d-flex flex-column justify-content-between h-100 p-4 text-center" style="min-height: 800px;">
             <!-- Elemento decorativo superior -->
@@ -164,8 +164,8 @@
     @endif
 
     <!-- ==============================================
-                                                         PANTALLA 2: PERMISOS DE UBICACIÓN (permissions)
-                                                         ============================================== -->
+         PANTALLA 2: PERMISOS DE UBICACIÓN (permissions)
+        ============================================== -->
     @if ($activeScreen == 'permissions')
         <div class="d-flex flex-column justify-content-between h-100 p-4" style="min-height: 800px;">
             <!-- Encabezado -->
@@ -247,8 +247,8 @@
     @endif
 
     <!-- ==============================================
-                                                         PANTALLA 3: MAPA GENERAL / RUTAS CERCANAS (routes)
-                                                         ============================================== -->
+                                                             PANTALLA 3: MAPA GENERAL / RUTAS CERCANAS (routes)
+                                                             ============================================== -->
     @if ($activeScreen == 'routes')
         <div class="h-100 position-relative d-flex flex-column" style="min-height: 800px; padding-bottom: 72px;">
             <!-- Barra de búsqueda flotante superior -->
@@ -302,9 +302,7 @@
                 <!-- Renderizado DInámico de Rutas desde la base de datos usando Eloquent -->
                 <div class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
                     @php
-                        $routesListToShow = $focusedRouteId 
-                            ? $rutas->where('id', $focusedRouteId) 
-                            : $rutas->take(12);
+                        $routesListToShow = $focusedRouteId ? $rutas->where('id', $focusedRouteId) : $rutas->take(12);
                     @endphp
                     @foreach ($routesListToShow as $ruta)
                         @php
@@ -349,8 +347,8 @@
     @endif
 
     <!-- ==============================================
-                                                         PANTALLA 4: DETALLE DE RUTA ACTIVA (route-detail)
-                                                         ============================================== -->
+        PANTALLA 4: DETALLE DE RUTA ACTIVA (route-detail)
+        ============================================== -->
     @if ($activeScreen == 'route-detail')
         <div class="h-100 d-flex flex-column justify-content-between p-3"
             style="min-height: 800px; padding-bottom: 72px;">
@@ -494,8 +492,8 @@
     @endif
 
     <!-- ==============================================
-                                                         PANTALLA 5: SEGUIMIENTO EN VIVO (tracking)
-                                                         ============================================== -->
+                                                             PANTALLA 5: SEGUIMIENTO EN VIVO (tracking)
+                                                             ============================================== -->
     @if ($activeScreen == 'tracking')
         <div class="h-100 position-relative d-flex flex-column" style="min-height: 800px; padding-bottom: 72px;">
             <!-- Botón Flotante Atrás y Titulo -->
@@ -617,8 +615,8 @@
     @endif
 
     <!-- ==============================================
-                                                         PANTALLA 6: FAVORITOS Y ALERTAS (favorites)
-                                                         ============================================== -->
+                                                             PANTALLA 6: FAVORITOS Y ALERTAS (favorites)
+                                                             ============================================== -->
     @if ($activeScreen == 'favorites')
         <div class="h-100 d-flex flex-column justify-content-between p-3"
             style="min-height: 800px; padding-bottom: 72px;">
@@ -756,8 +754,8 @@
     @endif
 
     <!-- ==============================================
-                                                         PANTALLA: CATALOGO DE TODAS LAS RUTAS (routes-list)
-                                                         ============================================== -->
+                                                             PANTALLA: CATALOGO DE TODAS LAS RUTAS (routes-list)
+                                                             ============================================== -->
     @if ($activeScreen == 'routes-list')
         <div class="h-100 d-flex flex-column justify-content-between p-3"
             style="min-height: 800px; padding-bottom: 72px;">

@@ -41,73 +41,23 @@
             color: var(--tr-text-primary);
             font-family: var(--tr-font-body);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             margin: 0;
             overflow-x: hidden;
         }
 
-        /* En PC de escritorio, mostramos un marco de teléfono móvil premium */
-        @media (min-width: 992px) {
-            .mobile-frame-container {
-                width: 410px;
-                height: 840px;
-                background-color: #0b0f19;
-                border: 12px solid #1f2937;
-                border-radius: 48px;
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 40px rgba(16, 185, 129, 0.08);
-                position: relative;
-                overflow: hidden;
-                display: flex;
-                flex-direction: column;
-            }
-
-            /* Speaker de la cámara del iPhone */
-            .mobile-frame-container::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 140px;
-                height: 25px;
-                background-color: #1f2937;
-                border-bottom-left-radius: 18px;
-                border-bottom-right-radius: 18px;
-                z-index: 1000;
-            }
-
-            .mobile-app-content {
-                flex: 1;
-                width: 100%;
-                height: 100%;
-                overflow-y: auto;
-                background-color: var(--tr-bg-main);
-                position: relative;
-                padding-top: 15px; /* Para no chocar con la isla/parlante superior */
-            }
+        .mobile-frame-container {
+            width: 100%;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
         }
 
-        /* En celulares reales, ocupa el 100% de la pantalla sin marco */
-        @media (max-width: 991px) {
-            .mobile-frame-container {
-                width: 100vw;
-                height: 100vh;
-                border: none;
-                border-radius: 0;
-                box-shadow: none;
-                display: flex;
-                flex-direction: column;
-            }
-
-            .mobile-app-content {
-                flex: 1;
-                width: 100%;
-                height: 100%;
-                overflow-y: auto;
-                background-color: var(--tr-bg-main);
-            }
+        .mobile-app-content {
+            flex: 1;
+            width: 100%;
+            background-color: var(--tr-bg-main);
+            position: relative;
         }
 
         /* Ocultar barra de desplazamiento manteniendo la funcionalidad */
