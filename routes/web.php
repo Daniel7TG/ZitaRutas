@@ -20,8 +20,25 @@ use Illuminate\Support\Facades\Route;
 */
 
 // Página de bienvenida
+use App\Models\Ruta;
+
+// Página de bienvenida dinámica con carga de rutas reales desde la BD usando Eloquent ORM
 Route::get('/', function () {
-    return view('welcome');
+    $screen = request()->query('screen', 'welcome');
+    $routeId = request()->query('route_id');
+
+    // Carga selectiva: solo eager-load puntos de navegación en pantallas que usan el mapa
+    if (in_array($screen, ['routes', 'tracking', 'route-detail'])) {
+        // Solo cargar coordenadas para las rutas del mapa (mejora de rendimiento)
+        $rutas = Ruta::with(['puntosNavegacion' => function ($query) {
+            $query->orderBy('id');
+        }])->get();
+    } else {
+        // Welcome, permissions, favorites: no necesitan coordenadas GPS
+        $rutas = Ruta::all();
+    }
+
+    return view('welcome', compact('rutas'));
 })->name('home');
 
 // Rutas de autenticación para conductores
