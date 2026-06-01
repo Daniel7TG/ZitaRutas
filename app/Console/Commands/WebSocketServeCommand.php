@@ -69,6 +69,10 @@ class WebSocketServeCommand extends Command
         $worker->onClose = [LocationHandler::class, 'onClose'];
         $worker->onError = [LocationHandler::class, 'onError'];
 
+        // Adaptar $argv para que Workerman entienda el comando (espera 'start')
+        global $argv;
+        $argv = [$argv[0] ?? 'artisan', 'start'];
+
         // Iniciar el servidor (bloquea el proceso)
         Worker::runAll();
 

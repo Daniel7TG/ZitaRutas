@@ -6,7 +6,7 @@
     <div class="mt-3">
         <div class="d-flex align-items-center gap-2 mb-2">
             <i class="fa-solid fa-leaf text-success fs-4"></i>
-            <span class="fs-5 fw-bold text-white" style="font-family: var(--tr-font-title);">RutaViva</span>
+            <span class="fs-5 fw-bold text-white" style="font-family: var(--tr-font-title);">ZitaRutas</span>
         </div>
         <hr class="border-secondary border-opacity-25 my-2">
     </div>
