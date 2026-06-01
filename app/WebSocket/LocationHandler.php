@@ -108,7 +108,26 @@ class LocationHandler
         echo "   ├─ Orientación:  {$location['orientacion']}°\n";
         echo "   └─ Velocidad:    {$location['velocidad']} km/h\n";
 
-        // Responder confirmación al cliente
+        // Transmitir (Broadcast) a todos los demás clientes conectados (ej. usuarios viendo el mapa)
+        if (isset($connection->worker) && isset($connection->worker->connections)) {
+            $broadcastData = json_encode([
+                'type' => 'location_update',
+                'client_id' => $clientId,
+                'latitud' => $location['latitud'],
+                'longitud' => $location['longitud'],
+                'orientacion' => $location['orientacion'],
+                'velocidad' => $location['velocidad'],
+                'timestamp' => $timestamp
+            ]);
+
+            foreach ($connection->worker->connections as $con) {
+                if ($con->id !== $clientId) {
+                    $con->send($broadcastData);
+                }
+            }
+        }
+
+        // Responder confirmación al cliente remitente
         $response = json_encode([
             'success' => true,
             'message' => 'Location recibida correctamente.',
