@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#10b981">
+    <title>ZitaRutas - Sin Conexión</title>
+    <link rel="manifest" href="/manifest.json">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-main: #030712;
+            --bg-card: rgba(21, 28, 43, 0.75);
+            --border: rgba(255, 255, 255, 0.08);
+            --green: #10b981;
+            --green-glow: rgba(16, 185, 129, 0.25);
+            --text-primary: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Fondo animado sutil */
+        body::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(16, 185, 129, 0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 60%, rgba(59, 130, 246, 0.04) 0%, transparent 50%);
+            animation: bg-drift 20s ease-in-out infinite alternate;
+            z-index: 0;
+        }
+
+        @keyframes bg-drift {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-5%, -3%); }
+        }
+
+        .offline-container {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 380px;
+            width: 100%;
+        }
+
+        /* Ícono animado */
+        .offline-icon-wrapper {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            margin: 0 auto 32px;
+        }
+
+        .offline-icon-glow {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--green-glow) 0%, transparent 70%);
+            animation: pulse-glow 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.15); opacity: 1; }
+        }
+
+        .offline-icon-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #151c2b, #0d1117);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .offline-icon-svg {
+            width: 44px;
+            height: 44px;
+            color: var(--green);
+            opacity: 0.9;
+        }
+
+        /* Textos */
+        .offline-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            color: #f87171;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 6px 14px;
+            border-radius: 100px;
+            margin-bottom: 24px;
+        }
+
+        .offline-badge-dot {
+            width: 6px;
+            height: 6px;
+            background: #f87171;
+            border-radius: 50%;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        .offline-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 12px;
+            color: var(--text-primary);
+        }
+
+        .offline-description {
+            font-size: 14px;
+            line-height: 1.7;
+            color: var(--text-muted);
+            margin-bottom: 36px;
+        }
+
+        /* Botón reintentar */
+        .btn-retry {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px 24px;
+            background: var(--green);
+            color: #030712;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 15px;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            box-shadow: 0 4px 20px var(--green-glow);
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .btn-retry:hover {
+            background: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-retry:active {
+            transform: translateY(0);
+        }
+
+        .btn-retry svg {
+            width: 18px;
+            height: 18px;
+            transition: transform 0.3s ease;
+        }
+
+        .btn-retry:hover svg {
+            transform: rotate(180deg);
+        }
+
+        /* Card de tips */
+        .tips-card {
+            margin-top: 32px;
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            text-align: left;
+        }
+
+        .tips-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 10px;
+        }
+
+        .tips-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .tips-list li {
+            font-size: 12px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            line-height: 1.4;
+        }
+
+        .tips-list li::before {
+            content: '';
+            min-width: 5px;
+            height: 5px;
+            background: var(--green);
+            border-radius: 50%;
+        }
+
+        /* Footer */
+        .offline-footer {
+            position: absolute;
+            bottom: 24px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 1;
+        }
+
+        .offline-footer span {
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.15);
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <!-- Ícono animado -->
+        <div class="offline-icon-wrapper">
+            <div class="offline-icon-glow"></div>
+            <div class="offline-icon-circle">
+                <svg class="offline-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="1" y1="1" x2="23" y2="23"></line>
+                    <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
+                    <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
+                    <path d="M10.71 5.05A16 16 0 0 1 22.56 9"></path>
+                    <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
+                    <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
+                    <line x1="12" y1="20" x2="12.01" y2="20"></line>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Badge -->
+        <div class="offline-badge">
+            <span class="offline-badge-dot"></span>
+            Sin conexión
+        </div>
+
+        <!-- Texto -->
+        <h1 class="offline-title">No hay conexión a internet</h1>
+        <p class="offline-description">
+            ZitaRutas necesita conexión para mostrarte las rutas y el seguimiento en vivo de las combis en Zitácuaro.
+        </p>
+
+        <!-- Botón -->
+        <button class="btn-retry" onclick="window.location.reload()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"></polyline>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            Reintentar conexión
+        </button>
+
+        <!-- Tips -->
+        <div class="tips-card">
+            <div class="tips-title">💡 Mientras tanto</div>
+            <ul class="tips-list">
+                <li>Verifica que tu Wi-Fi o datos móviles estén activos</li>
+                <li>Intenta acercarte a una zona con mejor señal</li>
+                <li>Las páginas visitadas previamente pueden estar disponibles</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="offline-footer">
+        <span>ZitaRutas</span>
+    </div>
+</body>
+</html>
