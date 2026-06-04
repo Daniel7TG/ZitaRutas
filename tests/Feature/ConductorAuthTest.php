@@ -23,25 +23,26 @@ class ConductorAuthTest extends TestCase
     }
 
     /**
-     * Test que un POST a /login sin credenciales no causa un error del servidor.
+     * Test que un POST a /login sin credenciales no causa un error del servidor y redirecciona por validación fallida.
      */
     public function test_login_post_without_credentials_returns_valid_response(): void
     {
         $response = $this->post('/login', []);
 
-        // El controlador está vacío, así que retorna 200 sin hacer nada
-        $response->assertStatus(200);
+        // El controlador ahora realiza validaciones y redirecciona
+        $response->assertStatus(302);
     }
 
     /**
-     * Test que un POST a /logout retorna una respuesta válida.
+     * Test que un POST a /logout retorna una respuesta válida y redirecciona a la raíz.
      */
     public function test_logout_returns_valid_response(): void
     {
         $response = $this->post('/logout');
 
-        // El controlador está vacío, así que retorna 200
-        $response->assertStatus(200);
+        // El controlador ahora cierra sesión y redirecciona a la raíz
+        $response->assertStatus(302);
+        $response->assertRedirect('/');
     }
 
     /**

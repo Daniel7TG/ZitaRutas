@@ -1,4 +1,4 @@
-<div class="h-100 position-relative d-flex flex-column" style="min-height: 800px; padding-bottom: 72px;">
+<div class="h-100 w-100 position-relative d-flex flex-column">
     <!-- Botón Flotante Atrás y Titulo -->
     <div class="position-absolute top-0 left-0 w-100 p-3" style="z-index: 100;">
         <div class="glass-card p-2 d-flex align-items-center justify-content-between shadow-lg"
@@ -76,13 +76,7 @@
                     </div>
                     <span class="badge bg-success bg-opacity-20 text-success fs-8">Procesando GPS</span>
                 </div>
-                <div class="d-flex align-items-center justify-content-between py-1 px-2 rounded">
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="fa-regular fa-circle text-muted-custom fs-8"></i>
-                        <span class="text-muted-custom fs-8">Puntos en base de datos:
-                            {{ $selectedRuta->puntosNavegacion->count() }}</span>
-                    </div>
-                </div>
+
             </div>
         </div>
 
@@ -98,6 +92,4 @@
         </div>
     </div>
 
-    <!-- Barra de Navegación Inferior -->
-    @include('partials.bottom-nav')
 </div>

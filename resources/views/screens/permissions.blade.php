@@ -1,4 +1,4 @@
-<div class="d-flex flex-column justify-content-between h-100 p-4" style="min-height: 800px;">
+<div class="d-flex flex-column justify-content-between h-100 w-100 p-4">
     <!-- Encabezado -->
     <div class="mt-2">
         <div class="d-flex align-items-center gap-2 mb-2">
