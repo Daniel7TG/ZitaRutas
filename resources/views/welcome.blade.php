@@ -860,6 +860,9 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const activeScreen = "{{ $activeScreen }}";
+            const colorsToSubscribe = @json($rutas->pluck('color')->unique()->values());
+            const selectedRouteColor = "{{ $selectedRuta ? $selectedRuta->color : '' }}";
+            const activeUnit = "{{ $activeUnit }}";
 
             if (activeScreen === 'routes' || activeScreen === 'tracking') {
 
@@ -881,20 +884,304 @@
                     maxZoom: 20
                 }).addTo(map);
 
-                // 3. Crear iconos
-                const busIcon = L.divIcon({
-                    className: 'custom-bus-icon',
-                    html: '<div class="bus-pin-glow"><i class="fa-solid fa-bus"></i></div>',
-                    iconSize: [32, 32],
-                    iconAnchor: [16, 16]
-                });
-
+                // 3. Iconos base
                 const userIcon = L.divIcon({
                     className: 'custom-user-icon',
                     html: '<div class="user-pin-glow"></div>',
                     iconSize: [24, 24],
                     iconAnchor: [12, 12]
                 });
+
+                // ================================================================
+                // VEHICLE MOVEMENT SIMULATOR
+                // ================================================================
+                class VehicleSimulator {
+                    constructor(map, activeScreen) {
+                        this.map = map;
+                        this.activeScreen = activeScreen;
+                        this.vehicles = {};
+                        this.rafId = null;
+                        this.startLoop();
+                    }
+
+                    startLoop() {
+                        const loop = () => {
+                            this.update();
+                            this.rafId = requestAnimationFrame(loop);
+                        };
+                        this.rafId = requestAnimationFrame(loop);
+                    }
+
+                    stop() {
+                        if (this.rafId) cancelAnimationFrame(this.rafId);
+                    }
+
+                    getVehicleColor(data) {
+                        return data.color || '#10b981';
+                    }
+
+                    createIcon(color, bearing) {
+                        // Asumimos que fa-bus apunta al Este (derecha). 0° = Norte, por eso restamos 90.
+                        const rotation = (parseFloat(bearing || 0) - 90).toFixed(1);
+                        return L.divIcon({
+                            className: 'custom-bus-icon',
+                            html: `<div class="bus-pin-glow" style="background-color: ${color}; box-shadow: 0 0 15px ${color}; transform: rotate(${rotation}deg); transform-origin: center center; display: flex; align-items: center; justify-content: center; width: 100%; height: 100%;"><i class="fa-solid fa-bus text-white"></i></div>`,
+                            iconSize: [32, 32],
+                            iconAnchor: [16, 16]
+                        });
+                    }
+
+                    createVehicle(id, data) {
+                        const color = this.getVehicleColor(data);
+                        const bearing = parseFloat(data.orientacion || 0);
+                        const lat = parseFloat(data.latitud);
+                        const lng = parseFloat(data.longitud);
+                        const speed = parseFloat(data.velocidad || 0);
+                        const numCombi = data.num_combi ?? 'N/A';
+                        const now = Date.now();
+
+                        const marker = L.marker([lat, lng], {
+                            icon: this.createIcon(color, bearing)
+                        }).addTo(this.map);
+
+                        marker.bindPopup(this.buildPopupContent(numCombi, color, speed, bearing));
+
+                        const vehicle = {
+                            id: id,
+                            marker: marker,
+                            lastRealLat: lat,
+                            lastRealLng: lng,
+                            currentLat: lat,
+                            currentLng: lng,
+                            speedKmh: speed,
+                            bearing: bearing,
+                            color: color,
+                            numCombi: numCombi,
+                            lastRealTime: now,
+                            isTransitioning: false,
+                            transitionStartTime: 0,
+                            transitionDuration: 600,
+                            startTransLat: 0,
+                            startTransLng: 0,
+                            targetLat: lat,
+                            targetLng: lng,
+                            targetBearing: bearing,
+                            targetSpeed: speed,
+                            lastPanTime: 0
+                        };
+
+                        if (this.activeScreen === 'tracking') {
+                            this.map.panTo([lat, lng]);
+                            this.updateTrackingUI(numCombi, color, speed, bearing);
+                        }
+
+                        return vehicle;
+                    }
+
+                    buildPopupContent(numCombi, color, speed, bearing) {
+                        return `<div style="min-width:140px;">
+                            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+                                <span style="width:12px;height:12px;border-radius:50%;background:${color};display:inline-block;"></span>
+                                <strong>Combi #${numCombi}</strong>
+                            </div>
+                            <div style="font-size:12px;color:#333;">
+                                🚗 Velocidad: <strong>${parseFloat(speed).toFixed(1)} km/h</strong><br>
+                                🧭 Orientación: <strong>${parseFloat(bearing).toFixed(1)}°</strong>
+                            </div>
+                        </div>`;
+                    }
+
+                    updateMarkerIconRotation(vehicle) {
+                        const el = vehicle.marker.getElement();
+                        if (!el) return;
+                        const glow = el.querySelector('.bus-pin-glow');
+                        if (glow) {
+                            const rotation = (vehicle.bearing - 90).toFixed(1);
+                            glow.style.transform = `rotate(${rotation}deg)`;
+                        }
+                    }
+
+                    haversine(lat1, lng1, lat2, lng2) {
+                        const R = 6371000;
+                        const dLat = (lat2 - lat1) * Math.PI / 180;
+                        const dLng = (lng2 - lng1) * Math.PI / 180;
+                        const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+                        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                    }
+
+                    smoothTransitionToReal(id, data) {
+                        const v = this.vehicles[id];
+                        if (!v) return;
+
+                        const now = Date.now();
+                        v.isTransitioning = true;
+                        v.transitionStartTime = now;
+                        v.transitionDuration = 600;
+                        v.startTransLat = v.currentLat;
+                        v.startTransLng = v.currentLng;
+
+                        v.targetLat = parseFloat(data.latitud);
+                        v.targetLng = parseFloat(data.longitud);
+                        v.targetBearing = parseFloat(data.orientacion || v.bearing);
+                        v.targetSpeed = parseFloat(data.velocidad || v.speedKmh);
+                        v.numCombi = data.num_combi ?? v.numCombi;
+                        v.color = data.color || v.color;
+
+                        const dist = this.haversine(v.currentLat, v.currentLng, v.targetLat, v.targetLng);
+                        if (dist < 5) {
+                            v.isTransitioning = false;
+                            v.lastRealLat = v.targetLat;
+                            v.lastRealLng = v.targetLng;
+                            v.currentLat = v.targetLat;
+                            v.currentLng = v.targetLng;
+                            v.bearing = v.targetBearing;
+                            v.speedKmh = v.targetSpeed;
+                            v.lastRealTime = now;
+                            v.marker.setLatLng([v.currentLat, v.currentLng]);
+                            this.updateMarkerIconRotation(v);
+                            v.marker.getPopup().setContent(this.buildPopupContent(v.numCombi, v.color, v.speedKmh, v.bearing));
+                            if (this.activeScreen === 'tracking') {
+                                this.updateTrackingUI(v.numCombi, v.color, v.speedKmh, v.bearing);
+                            }
+                        }
+                    }
+
+                    updateTrackingUI(numCombi, color, speed, bearing) {
+                        const etaEl = document.getElementById('dynamic-eta');
+                        const speedContainer = document.querySelector('.fa-gauge')?.closest('span');
+                        if (etaEl) {
+                            etaEl.innerHTML = `<span class="text-success animate-pulse"><i class="fa-solid fa-circle me-1"></i> EN VIVO #${numCombi}</span>`;
+                        }
+                        if (speedContainer) {
+                            speedContainer.innerHTML = `<i class="fa-solid fa-gauge text-success me-1 fs-5"></i> ${parseFloat(speed).toFixed(0)} km/h`;
+                        }
+                    }
+
+                    update() {
+                        const now = Date.now();
+                        for (const id in this.vehicles) {
+                            const v = this.vehicles[id];
+                            if (!v) continue;
+
+                            if (v.isTransitioning) {
+                                const progress = Math.min((now - v.transitionStartTime) / v.transitionDuration, 1);
+                                const ease = 1 - (1 - progress) * (1 - progress); // easeOutQuad
+
+                                v.currentLat = v.startTransLat + (v.targetLat - v.startTransLat) * ease;
+                                v.currentLng = v.startTransLng + (v.targetLng - v.startTransLng) * ease;
+                                v.marker.setLatLng([v.currentLat, v.currentLng]);
+
+                                if (progress >= 1) {
+                                    v.isTransitioning = false;
+                                    v.lastRealLat = v.targetLat;
+                                    v.lastRealLng = v.targetLng;
+                                    v.bearing = v.targetBearing;
+                                    v.speedKmh = v.targetSpeed;
+                                    v.lastRealTime = now;
+                                    v.marker.getPopup().setContent(this.buildPopupContent(v.numCombi, v.color, v.speedKmh, v.bearing));
+                                    this.updateMarkerIconRotation(v);
+                                    if (this.activeScreen === 'tracking') {
+                                        this.updateTrackingUI(v.numCombi, v.color, v.speedKmh, v.bearing);
+                                    }
+                                }
+                                continue;
+                            }
+
+                            const elapsedSec = (now - v.lastRealTime) / 1000;
+                            if (elapsedSec <= 0 || v.speedKmh <= 0.5) continue;
+
+                            const speedMps = v.speedKmh / 3.6;
+                            const distanceM = speedMps * elapsedSec;
+
+                            if (distanceM < 0.5) continue;
+
+                            const R = 6371000;
+                            const lat0Rad = v.lastRealLat * Math.PI / 180;
+                            const bearingRad = v.bearing * Math.PI / 180;
+
+                            const deltaLat = (distanceM * Math.cos(bearingRad)) / R;
+                            const deltaLng = (distanceM * Math.sin(bearingRad)) / (R * Math.cos(lat0Rad));
+
+                            v.currentLat = v.lastRealLat + (deltaLat * 180 / Math.PI);
+                            v.currentLng = v.lastRealLng + (deltaLng * 180 / Math.PI);
+
+                            v.marker.setLatLng([v.currentLat, v.currentLng]);
+
+                            if (this.activeScreen === 'tracking') {
+                                if (!v.lastPanTime || (now - v.lastPanTime > 250)) {
+                                    this.map.panTo([v.currentLat, v.currentLng], { animate: true, duration: 0.25 });
+                                    v.lastPanTime = now;
+                                }
+                            }
+                        }
+                    }
+
+                    updateRealData(data) {
+                        const id = data.conductor_id;
+                        if (!id) return;
+
+                        if (!this.vehicles[id]) {
+                            this.vehicles[id] = this.createVehicle(id, data);
+                        } else {
+                            this.smoothTransitionToReal(id, data);
+                        }
+                    }
+
+                    removeVehicle(id) {
+                        if (this.vehicles[id]) {
+                            this.map.removeLayer(this.vehicles[id].marker);
+                            delete this.vehicles[id];
+                        }
+                    }
+                }
+
+                const simulator = new VehicleSimulator(map, activeScreen);
+
+                // ================================================================
+                // WEBSOCKET CONNECTION
+                // ================================================================
+                const wsHost = window.location.hostname || "127.0.0.1";
+                const wsPort = "8080";
+                const socket = new WebSocket(`ws://${wsHost}:${wsPort}`);
+
+                socket.onopen = function() {
+                    console.log("🔌 Conectado exitosamente al servidor WebSocket de ZitaRutas");
+                    let subs = [];
+                    if (activeScreen === 'tracking' && selectedRouteColor) {
+                        subs = [selectedRouteColor];
+                    } else if (activeScreen === 'routes' && colorsToSubscribe.length > 0) {
+                        subs = colorsToSubscribe;
+                    }
+                    if (subs.length > 0) {
+                        socket.send(JSON.stringify({ type: 'subscribe', colors: subs }));
+                        console.log("📬 Suscrito a colores:", subs);
+                    }
+                };
+
+                socket.onmessage = function(event) {
+                    try {
+                        const message = JSON.parse(event.data);
+                        if (message.type === 'location_update') {
+                            simulator.updateRealData(message);
+                        } else if (message.type === 'driver_disconnected') {
+                            if (message.conductor_id) {
+                                simulator.removeVehicle(message.conductor_id);
+                            }
+                        } else if (message.type === 'subscribed') {
+                            console.log("✅ Suscripción confirmada:", message.colors);
+                        }
+                    } catch (e) {
+                        console.error("Error al procesar mensaje de WebSocket:", e);
+                    }
+                };
+
+                socket.onerror = function(error) {
+                    console.warn("⚠️ No se pudo conectar al servidor WebSocket (¿Está ejecutándose 'php artisan websocket:serve'?)", error);
+                };
+
+                socket.onclose = function() {
+                    console.log("🔌 Conexión WebSocket cerrada.");
+                };
 
                 // 4. Lógica de renderizado dinámico usando datos reales de base de datos
                 if (activeScreen === 'routes') {
@@ -987,142 +1274,9 @@
                             .bindPopup("<strong class='text-primary'>Tú estás aquí (En paradero)</strong>")
                             .openPopup();
 
-                        // Combi Marcador con color dinámico de la ruta
-                        const styledBusIcon = L.divIcon({
-                            className: 'custom-bus-icon',
-                            html: `<div class="bus-pin-glow" style="background-color: ${selectedRouteColor}; box-shadow: 0 0 15px ${selectedRouteColor};"><i class="fa-solid fa-bus"></i></div>`,
-                            iconSize: [32, 32],
-                            iconAnchor: [16, 16]
-                        });
-
-                        // Colocamos la combi al inicio de la ruta real
-                        const busMarker = L.marker(selectedRouteCoords[0], {
-                            icon: styledBusIcon
-                        }).addTo(map);
-                        busMarker.bindPopup(
-                            `<strong>Combi {{ $activeUnit }}</strong><br><span class="text-dark">Aproximándose...</span>`
-                        ).openPopup();
-
-                        // Animación Realista: Mover la combi paso a paso a lo largo de las coordenadas geográficas de la BD
-                        let step = 0;
-                        const maxSteps = Math.min(selectedRouteCoords.length, 35); // Limitar para demostración ágil
-
-                        const intervalId = setInterval(function() {
-                            if (step < maxSteps) {
-                                const nextPos = selectedRouteCoords[step];
-                                busMarker.setLatLng(nextPos);
-
-                                // Calcular progreso porcentual del viaje
-                                const progress = Math.round((step / (maxSteps - 1)) * 100);
-
-                                // Actualizar barra de progreso y combi en el DOM
-                                document.getElementById('tracking-progress-bar').style.width =
-                                    `${progress}%`;
-                                document.getElementById('tracking-combi-indicator').style.left =
-                                    `${Math.min(progress, 90)}%`;
-
-                                // Calcular ETA decreciente
-                                const minutesLeft = Math.max(1, Math.round(((maxSteps - step) / maxSteps) *
-                                    6));
-                                document.getElementById('dynamic-eta').innerText = `${minutesLeft} min`;
-
-                                if (step === maxSteps - 1) {
-                                    busMarker.bindPopup(
-                                        `<strong>Combi {{ $activeUnit }}</strong><br><span class="text-dark">¡Ha llegado a tu parada!</span>`
-                                    ).openPopup();
-                                }
-
-                                map.panTo(nextPos);
-                                step++;
-                            } else {
-                                step = 0; // Reiniciar simulación para demostración continua
-                            }
-                        }, 4000); // Mueve la combi cada 4 segundos
+                        // La combi en vivo se maneja mediante VehicleSimulator cuando llegan datos reales por WebSocket.
                     }
                 }
-
-                // ================================================================
-                // 5. CONEXIÓN WEBSOCKET PARA RASTREO MULTIPLAYER EN TIEMPO REAL
-                // ================================================================
-                const wsHost = window.location.hostname || "127.0.0.1";
-                const wsPort = "8080";
-                const socket = new WebSocket(`ws://${wsHost}:${wsPort}`);
-                const realTimeMarkers = {};
-
-                socket.onopen = function() {
-                    console.log("🔌 Conectado exitosamente al servidor WebSocket de ZitaRutas");
-                };
-
-                socket.onmessage = function(event) {
-                    try {
-                        const message = JSON.parse(event.data);
-                        if (message.type === 'location_update') {
-                            const {
-                                client_id,
-                                latitud,
-                                longitud,
-                                orientacion,
-                                velocidad
-                            } = message;
-
-                            console.log(`📍 Ubicación en tiempo real recibida para combi #${client_id}:`,
-                                latitud, longitud);
-
-                            // Si ya tenemos un marcador para esta combi, lo actualizamos con animación
-                            if (realTimeMarkers[client_id]) {
-                                realTimeMarkers[client_id].setLatLng([latitud, longitud]);
-                                realTimeMarkers[client_id].getPopup().setContent(
-                                    `<strong>Combi en Vivo (#${client_id})</strong><br>` +
-                                    `<span class="text-dark">🚗 Velocidad: ${velocidad} km/h<br>🧭 Orientación: ${orientacion}°</span>`
-                                );
-                            } else {
-                                // Crear un marcador de combi en vivo de color verde con borde neón
-                                const liveColor = "#10b981";
-                                const liveBusIcon = L.divIcon({
-                                    className: 'custom-bus-icon',
-                                    html: `<div class="bus-pin-glow" style="background-color: ${liveColor}; box-shadow: 0 0 18px ${liveColor}; border: 3px solid #ff007f;"><i class="fa-solid fa-bus text-white"></i></div>`,
-                                    iconSize: [32, 32],
-                                    iconAnchor: [16, 16]
-                                });
-
-                                const marker = L.marker([latitud, longitud], {
-                                    icon: liveBusIcon
-                                }).addTo(map);
-                                marker.bindPopup(
-                                    `<strong>Combi en Vivo (#${client_id})</strong><br>` +
-                                    `<span class="text-dark">🚗 Velocidad: ${velocidad} km/h<br>🧭 Orientación: ${orientacion}°</span>`
-                                ).openPopup();
-
-                                realTimeMarkers[client_id] = marker;
-                            }
-
-                            // Si estamos en la pantalla de seguimiento individual
-                            if (activeScreen === 'tracking') {
-                                // Actualizar la interfaz de usuario con los datos reales recibidos por WebSocket
-                                const etaElement = document.getElementById('dynamic-eta');
-                                if (etaElement) {
-                                    etaElement.innerHTML =
-                                        `<span class="text-success animate-pulse"><i class="fa-solid fa-circle me-1"></i> EN VIVO</span>`;
-                                }
-
-                                // Centrar el mapa dinámicamente en el GPS del conductor
-                                map.panTo([latitud, longitud]);
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Error al procesar mensaje de WebSocket:", e);
-                    }
-                };
-
-                socket.onerror = function(error) {
-                    console.warn(
-                        "⚠️ No se pudo conectar al servidor WebSocket (¿Está ejecutándose 'php artisan websocket:serve'?)"
-                    );
-                };
-
-                socket.onclose = function() {
-                    console.log("🔌 Conexión WebSocket cerrada.");
-                };
             }
         });
     </script>

@@ -9,19 +9,6 @@ use Workerman\Connection\TcpConnection;
 /**
  * Handler de WebSocket para ubicaciones en tiempo real con autenticación
  * de conductores y suscripción de usuarios por color de ruta.
- *
- * Protocolo:
- *
- * --- CONDUCTOR ---
- * 1. Auth:       → { "type": "auth", "token": "..." }
- *                ← { "type": "auth_ok", "conductor_id": 1, "color": "...", "num_combi": 123 }
- * 2. Location:   → { "type": "location", "latitud": 19.43, "longitud": -99.13, "orientacion": 180.5, "velocidad": 45.3 }
- *                ← { "type": "location_ack", "success": true }
- *
- * --- USUARIO (PASAJERO) ---
- * 1. Subscribe:  → { "type": "subscribe", "colors": ["#FFFF00 - Amarilla...", "#FF0000 - Roja..."] }
- *                ← { "type": "subscribed", "colors": [...] }
- * 2. Recibe:     ← { "type": "location_update", "color": "...", "num_combi": 123, "latitud": 19.43, ... }
  */
 class LocationHandler
 {
@@ -164,6 +151,7 @@ class LocationHandler
             'conductor_id' => $conductor->id,
             'color' => $ruta->color,
             'num_combi' => $conductor->num_combi,
+            'ruta_id' => $ruta->id,
         ]));
 
         echo "[{$timestamp}] 🔑 Conductor autenticado - Cliente #{$clientId}\n";
@@ -180,7 +168,7 @@ class LocationHandler
     private static function handleLocation(TcpConnection $connection, array $message, string $timestamp): void
     {
         $clientId = $connection->id;
-
+        echo "location";
         // 🔒 VERIFICACIÓN DE AUTENTICACIÓN
         if (empty($connection->isDriver)) {
             $connection->send(json_encode([
@@ -272,6 +260,7 @@ class LocationHandler
             'orientacion' => $orientacion,
             'velocidad' => $velocidad,
             'timestamp' => $timestamp,
+            'timestamp_ms' => round(microtime(true) * 1000),
         ]);
 
         $receptores = 0;

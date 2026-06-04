@@ -22,33 +22,35 @@ class ConductorAuthController extends Controller
      *
      * POST /api/conductor/login
      *
-     * Espera: { color, num_combi, password }
+     * Espera: { ruta_id, num_combi, password }
      * Retorna: { token, conductor: { id, nombre, apellido, num_combi, id_conductor, color, ruta_id } }
      */
     public function login(Request $request): JsonResponse
     {
         $request->validate([
-            'color' => 'required|string',
+            'ruta_id' => 'required|integer|min:1',
             'num_combi' => 'required|integer|min:1',
             'password' => 'required|string',
         ], [
-            'color.required' => 'El color de la ruta es obligatorio.',
+            'ruta_id.required' => 'El ID de la ruta es obligatorio.',
+            'ruta_id.integer' => 'El ID de la ruta debe ser un número entero.',
+            'ruta_id.min' => 'El ID de la ruta debe ser mayor a 0.',
             'num_combi.required' => 'El número de combi es obligatorio.',
             'num_combi.integer' => 'El número de combi debe ser un número entero.',
             'num_combi.min' => 'El número de combi debe ser mayor a 0.',
             'password.required' => 'La contraseña es obligatoria.',
         ]);
 
-        $color = $request->input('color');
+        $rutaId = (int) $request->input('ruta_id');
         $numCombi = (int) $request->input('num_combi');
         $password = $request->input('password');
 
-        $ruta = Ruta::where('color', $color)->first();
+        $ruta = Ruta::where('id', $rutaId)->first();
 
         if (!$ruta) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ruta no encontrada. Verifica el color.',
+                'message' => 'Ruta no encontrada. Verifica el ID de ruta.',
             ], 404);
         }
 

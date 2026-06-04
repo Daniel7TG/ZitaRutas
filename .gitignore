@@ -189,3 +189,6 @@ rutas-transporte-publico-zitacuaro/15597759.geojson
 rutas-transporte-publico-zitacuaro/15597762.geojson
 rutas-transporte-publico-zitacuaro/15597782.geojson
 mobile/ColorRuta.kt
+rutas_colores.csv
+docs/API_REFERENCE.md
+docs/ESPECIFICACION_SISTEMA_RUTA_MAS_CORTA.md
