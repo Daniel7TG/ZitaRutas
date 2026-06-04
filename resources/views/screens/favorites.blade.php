@@ -1,6 +1,5 @@
-<div class="h-100 d-flex flex-column justify-content-between p-3"
-    style="min-height: 800px; padding-bottom: 72px;">
-    <div>
+<div class="h-100 w-100 d-flex flex-column p-3">
+    <div class="flex-grow-1 overflow-y-auto" style="padding-right: 2px;">
         <!-- Encabezado -->
         <div class="d-flex align-items-center gap-2 mb-3 mt-2">
             <i class="fa-solid fa-star text-warning fs-4"></i>
@@ -112,7 +111,4 @@
             </div>
         </div>
     </div>
-
-    <!-- Barra de Navegación Inferior -->
-    @include('partials.bottom-nav')
 </div>

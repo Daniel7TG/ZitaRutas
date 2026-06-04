@@ -1,5 +1,4 @@
-<div class="h-100 d-flex flex-column justify-content-between p-3"
-    style="min-height: 800px; padding-bottom: 72px;">
+<div class="h-100 w-100 d-flex flex-column p-3">
     <div>
         <!-- Encabezado -->
         <div class="d-flex align-items-center justify-content-between mb-3 mt-2">
@@ -22,9 +21,9 @@
             </div>
         </div>
 
-        <!-- Contenedor del listado de rutas -->
-        <div class="d-flex flex-column gap-2" id="routesListContainer"
-            style="max-height: 520px; overflow-y: auto; padding-right: 2px;">
+        <!-- Contenedor del listado de rutas (flexible y auto-scrollable) -->
+        <div class="d-flex flex-column gap-2 flex-grow-1 overflow-y-auto" id="routesListContainer"
+            style="padding-right: 2px;">
             @foreach ($rutas as $ruta)
                 @php
                     $info = parseRouteData($ruta);
@@ -54,8 +53,6 @@
         </div>
     </div>
 
-    <!-- Barra de Navegación Inferior -->
-    @include('partials.bottom-nav')
 </div>
 
 <script>

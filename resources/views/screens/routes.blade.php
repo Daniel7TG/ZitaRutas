@@ -1,4 +1,4 @@
-<div class="h-100 position-relative d-flex flex-column" style="min-height: 800px; padding-bottom: 72px;">
+<div class="h-100 w-100 position-relative d-flex flex-column">
     <!-- Barra de búsqueda flotante superior -->
     <div class="position-absolute top-0 left-0 w-100 p-3" style="z-index: 100;">
         <div class="glass-card p-2 d-flex align-items-center gap-2 shadow-lg"
@@ -88,6 +88,4 @@
         </div>
     </div>
 
-    <!-- Barra de Navegación Inferior Móvil -->
-    @include('partials.bottom-nav')
 </div>

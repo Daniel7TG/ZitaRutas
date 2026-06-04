@@ -46,7 +46,7 @@
     <!-- Custom Premium Styles (Dark + Light Mode) -->
     <style>
         /* ═══════════════════════════════════════════════
-           DARK MODE (default)
+           DARK MODE
            ═══════════════════════════════════════════════ */
         :root {
             --tr-bg-main: #080c14;
@@ -119,7 +119,6 @@
             --tr-icon-circle-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
         }
 
-        /* ── Smooth transition on theme change ─────── */
         body,
         .glass-card,
         .mobile-bottom-nav,
@@ -133,22 +132,26 @@
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        /* ── Base Body ─────────────────────────────── */
+        html, body {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+        }
+
         body {
             background-color: var(--tr-bg-body);
             color: var(--tr-text-primary);
             font-family: var(--tr-font-body);
-            min-height: 100vh;
-            margin: 0;
-            overflow-x: hidden;
         }
 
         .mobile-frame-container {
             width: 100%;
-            min-height: 100vh;
+            height: 100vh;
+            max-height: 100vh;
             display: flex;
             flex-direction: column;
             position: relative;
+            overflow: hidden;
         }
 
         .mobile-app-content {
@@ -156,9 +159,11 @@
             width: 100%;
             background-color: var(--tr-bg-main);
             position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
-        /* Scrollbar */
         .mobile-app-content::-webkit-scrollbar {
             width: 4px;
         }
@@ -168,7 +173,6 @@
             border-radius: 4px;
         }
 
-        /* ── Glassmorphism Cards ───────────────────── */
         .glass-card {
             background: var(--tr-bg-card);
             backdrop-filter: blur(12px);
@@ -182,7 +186,6 @@
             border-color: var(--tr-border-hover);
         }
 
-        /* ── Botón principal ───────────────────────── */
         .btn-neon-green {
             background-color: var(--tr-green-primary);
             color: #ffffff;
@@ -206,7 +209,6 @@
             transform: translateY(0);
         }
 
-        /* ── Botones secundarios ───────────────────── */
         .btn-dark-secondary {
             background-color: var(--tr-bg-btn-secondary);
             border: 1px solid var(--tr-border);
@@ -223,7 +225,6 @@
             color: var(--tr-text-primary);
         }
 
-        /* ── Títulos ───────────────────────────────── */
         h1,
         h2,
         h3,
@@ -239,7 +240,6 @@
             color: var(--tr-text-muted);
         }
 
-        /* ── Override Bootstrap text-white para light mode ── */
         [data-theme="light"] .text-white {
             color: var(--tr-text-primary) !important;
         }
@@ -256,11 +256,8 @@
             background-color: rgba(0, 0, 0, 0.08) !important;
         }
 
-        /* ── Barra de navegación inferior móvil ──── */
         .mobile-bottom-nav {
-            position: absolute;
-            bottom: 0;
-            left: 0;
+            position: relative;
             width: 100%;
             height: 72px;
             background: var(--tr-bg-nav);
@@ -271,6 +268,7 @@
             justify-content: space-around;
             align-items: center;
             z-index: 999;
+            flex-shrink: 0;
         }
 
         .nav-item-custom {
@@ -307,7 +305,6 @@
             text-shadow: none;
         }
 
-        /* ── Formularios y Inputs ──────────────────── */
         .form-control-custom {
             background-color: var(--tr-bg-input) !important;
             border: 1px solid var(--tr-border) !important;
@@ -326,7 +323,6 @@
             color: var(--tr-text-placeholder) !important;
         }
 
-        /* ── Switch Custom ─────────────────────────── */
         .form-check-input-custom {
             width: 3.2em !important;
             height: 1.8em !important;
@@ -346,7 +342,6 @@
             box-shadow: none !important;
         }
 
-        /* ── Insignias de Ruta ─────────────────────── */
         .route-badge {
             width: 36px;
             height: 36px;
@@ -372,7 +367,6 @@
             text-transform: uppercase;
         }
 
-        /* ── Leaflet Map Styling ───────────────────── */
         #leaflet-map {
             position: absolute;
             top: 0;
@@ -407,7 +401,6 @@
             font-size: 9px !important;
         }
 
-        /* ── Custom Map Pins ───────────────────────── */
         .custom-bus-icon {
             background: none;
             border: none;
@@ -466,7 +459,6 @@
             }
         }
 
-        /* ── Utilities ─────────────────────────────── */
         .fs-7 {
             font-size: 0.85rem !important;
         }
@@ -499,7 +491,6 @@
             }
         }
 
-        /* Hover glow effect for route cards */
         .hover-glow {
             transition: all 0.3s ease;
         }
@@ -526,7 +517,6 @@
             filter: blur(12px);
         }
 
-        /* ── Scrollbar para listas ─────────────────── */
         .d-flex.flex-column.gap-2::-webkit-scrollbar {
             width: 3px;
         }
@@ -536,7 +526,6 @@
             border-radius: 3px;
         }
 
-        /* ── Inline style overrides para light mode ── */
         [data-theme="light"] .glass-card[style*="background: rgba(13, 17, 26"],
         [data-theme="light"] .glass-card[style*="background: rgba(16, 185, 129"] {
             background: var(--tr-bg-card) !important;
@@ -550,7 +539,6 @@
             background-color: var(--tr-progress-bg) !important;
         }
 
-        /* ── Botón toggle de tema ──────────────────── */
         .theme-toggle-btn {
             position: fixed;
             top: 16px;
@@ -588,7 +576,6 @@
             transition: opacity 0.3s ease, transform 0.3s ease;
         }
 
-        /* Dark mode: mostrar sol (para cambiar a light) */
         .theme-toggle-btn .icon-sun {
             opacity: 1;
             transform: rotate(0deg);
@@ -599,7 +586,6 @@
             transform: rotate(-90deg);
         }
 
-        /* Light mode: mostrar luna (para cambiar a dark) */
         [data-theme="light"] .theme-toggle-btn .icon-sun {
             opacity: 0;
             transform: rotate(90deg);
@@ -610,7 +596,6 @@
             transform: rotate(0deg);
         }
 
-        /* ── Light mode: search bar input transparent ── */
         [data-theme="light"] .form-control.bg-transparent {
             color: var(--tr-text-primary) !important;
         }
@@ -619,16 +604,14 @@
             color: var(--tr-text-placeholder) !important;
         }
 
-        /* ── Light mode: icon circle on welcome ───── */
         [data-theme="light"] .bg-dark.rounded-circle {
             background-color: var(--tr-icon-circle-bg) !important;
             box-shadow: var(--tr-icon-circle-shadow) !important;
         }
 
-        /* ── Draggable Bottom Sheet ────────────────── */
         .routes-bottom-sheet {
             position: absolute;
-            bottom: 72px; /* Justo arriba de la barra de navegación */
+            bottom: 0;
             left: 0;
             width: 100%;
             background: var(--tr-bg-panel);
@@ -650,7 +633,6 @@
             transform: translateY(calc(100% - 36px)) !important;
         }
 
-        /* Area del drag handle */
         .drag-handle {
             width: 100%;
             height: 36px;
@@ -666,7 +648,6 @@
             cursor: grabbing;
         }
 
-        /* 3 lineas horizontales una sobre otra */
         .drag-handle-lines {
             display: flex;
             flex-direction: column;
@@ -688,7 +669,6 @@
             background-color: var(--tr-green-primary);
         }
 
-        /* Contenedor del contenido */
         .routes-sheet-content {
             padding: 0 20px 20px 20px;
             transition: opacity 0.3s ease;
@@ -700,7 +680,6 @@
             pointer-events: none;
         }
     </style>
-    <!-- Prevenir flash: aplicar tema guardado antes del render -->
     <script>
         (function() {
             var t = localStorage.getItem('zitarutas-theme');
@@ -715,7 +694,9 @@
         <div class="mobile-app-content" id="app-viewport">
             @yield('content')
         </div>
-        @yield('bottom-nav')
+        @if(in_array(request()->query('screen', 'welcome'), ['routes', 'routes-list', 'favorites', 'route-detail', 'tracking']))
+            @include('partials.bottom-nav')
+        @endif
     </div>
 
     <!-- Botón Toggle Dark/Light Mode -->
