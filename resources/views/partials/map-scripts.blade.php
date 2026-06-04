@@ -126,6 +126,22 @@
 
             socket.onopen = function() {
                 console.log("WebSocket conectado");
+
+                let colorsToSubscribe = [];
+                if (activeScreen === 'tracking') {
+                    const selectedColor = "{{ $selectedRutaInfo['hex'] ?? '' }}";
+                    if (selectedColor) colorsToSubscribe.push(selectedColor);
+                } else if (activeScreen === 'routes') {
+                    const realRoutes = @json($realRoutesData ?? []);
+                    colorsToSubscribe = realRoutes.map(r => r.color);
+                }
+                
+                if (colorsToSubscribe.length > 0) {
+                    socket.send(JSON.stringify({
+                        type: 'subscribe',
+                        colors: colorsToSubscribe
+                    }));
+                }
             };
 
             socket.onmessage = function(event) {

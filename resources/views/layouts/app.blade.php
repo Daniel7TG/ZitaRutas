@@ -706,7 +706,7 @@
         <div class="mobile-app-content" id="app-viewport">
             @yield('content')
         </div>
-        @if (in_array(request()->query('screen', 'welcome'), ['routes', 'routes-list', 'favorites', 'route-detail', 'tracking']))
+        @if (in_array(request()->query('screen', 'welcome'), ['routes', 'routes-list', 'route-planner', 'favorites', 'route-detail', 'tracking']))
             @include('partials.bottom-nav')
         @endif
     </div>

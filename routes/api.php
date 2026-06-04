@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\ConductorAuthController;
+use App\Http\Controllers\Api\RoutingController;
 use App\Http\Controllers\Api\RutaApiController;
 use Illuminate\Support\Facades\Route;
 
@@ -35,4 +36,8 @@ Route::prefix('rutas')->group(function () {
 
     // DELETE /api/rutas/{color}  → Eliminar una ruta por color
     Route::delete('/{color}', [RutaApiController::class, 'destroy'])->name('api.rutas.destroy');
+});
+
+Route::prefix('routing')->group(function () {
+    Route::post('/shortest-path', [RoutingController::class, 'shortestPath'])->name('api.routing.shortest-path');
 });

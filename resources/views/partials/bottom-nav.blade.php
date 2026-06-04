@@ -7,6 +7,10 @@
         <i class="fa-solid fa-bus"></i>
         <span>Rutas</span>
     </a>
+    <a href="?screen=route-planner" class="nav-item-custom {{ $activeScreen === 'route-planner' ? 'active' : '' }}">
+        <i class="fa-solid fa-route"></i>
+        <span>Ir</span>
+    </a>
     <a href="?screen=favorites" class="nav-item-custom {{ $activeScreen === 'favorites' ? 'active' : '' }}">
         <i class="fa-solid fa-star"></i>
         <span>Favoritos</span>
