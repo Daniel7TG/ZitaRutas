@@ -123,6 +123,7 @@
             const wsHost = window.location.hostname || "127.0.0.1";
             const wsPort = "8080";
             const socket = new WebSocket(`ws://${wsHost}:${wsPort}`);
+            const realTimeMarkers = {};
 
             socket.onopen = function() {
                 console.log("WebSocket conectado");
@@ -132,9 +133,37 @@
                 try {
                     const message = JSON.parse(event.data);
                     if (message.type === 'location_update') {
-                        const { latitud, longitud } = message;
+                        const { client_id, latitud, longitud, orientacion, velocidad } = message;
+
+                        if (realTimeMarkers[client_id]) {
+                            realTimeMarkers[client_id].setLatLng([latitud, longitud]);
+                            realTimeMarkers[client_id].getPopup().setContent(
+                                `<strong>Combi en Vivo (#${client_id})</strong><br>` +
+                                `<span class="text-dark">🚗 Velocidad: ${velocidad} km/h<br>🧭 Orientación: ${orientacion}°</span>`
+                            );
+                        } else {
+                            const liveColor = "#10b981";
+                            const liveBusIcon = L.divIcon({
+                                className: 'custom-bus-icon',
+                                html: `<div class="bus-pin-glow" style="background-color: ${liveColor}; box-shadow: 0 0 18px ${liveColor}; border: 3px solid #ff007f;"><i class="fa-solid fa-bus text-white"></i></div>`,
+                                iconSize: [32, 32],
+                                iconAnchor: [16, 16]
+                            });
+
+                            const marker = L.marker([latitud, longitud], { icon: liveBusIcon }).addTo(map);
+                            marker.bindPopup(
+                                `<strong>Combi en Vivo (#${client_id})</strong><br>` +
+                                `<span class="text-dark">🚗 Velocidad: ${velocidad} km/h<br>🧭 Orientación: ${orientacion}°</span>`
+                            ).openPopup();
+
+                            realTimeMarkers[client_id] = marker;
+                        }
 
                         if (activeScreen === 'tracking') {
+                            const etaElement = document.getElementById('dynamic-eta');
+                            if (etaElement) {
+                                etaElement.innerHTML = `<span class="text-success animate-pulse"><i class="fa-solid fa-circle me-1"></i> EN VIVO</span>`;
+                            }
                             map.panTo([latitud, longitud]);
                         }
                     }
