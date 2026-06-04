@@ -45,7 +45,7 @@
             isDragging = true;
             startY = clientY;
             sheetHeight = getSheetHeight();
-            sheet.style.transition = 'none'; // Desactivar transición durante el drag
+            sheet.style.transition = 'none';
         }
 
         function onMove(clientY) {
@@ -104,7 +104,7 @@
             if (isDragging) onEnd(e.changedTouches[0].clientY);
         });
 
-        // ── Mouse Events (para desktop) ──
+        // ── Mouse Events ──
         handle.addEventListener('mousedown', function(e) {
             e.preventDefault();
             onStart(e.clientY);
@@ -118,7 +118,7 @@
             if (isDragging) onEnd(e.clientY);
         });
 
-        // ── Click toggle (tap rápido sin arrastrar) ──
+        // ── Click toggle ──
         handle.addEventListener('click', function() {
             if (isCollapsed) {
                 expand();

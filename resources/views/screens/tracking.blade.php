@@ -20,7 +20,7 @@
     </div>
 
     <!-- Contenedor del Mapa Leaflet -->
-    <div class="flex-grow-1" style="height: 380px; min-height: 300px; position: relative;">
+    <div class="flex-grow-1" style="min-height: 150px; position: relative;">
         <div id="leaflet-map"></div>
     </div>
 
@@ -29,7 +29,7 @@
         style="background: rgba(13, 17, 26, 0.95); z-index: 5;">
 
         <!-- Grid de ETA y Velocidad -->
-        <div class="row text-center mb-3">
+        <div class="row g-0 text-center mb-3">
             <div class="col-6 border-end border-secondary border-opacity-25">
                 <small class="text-muted-custom d-block fs-8 mb-1">LLEGADA ESTIMADA</small>
                 <span class="text-success fw-extrabold fs-4 animate-pulse"><i

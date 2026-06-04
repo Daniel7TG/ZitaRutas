@@ -1,4 +1,4 @@
-<div class="d-flex flex-column justify-content-between h-100 w-100 p-4">
+<div class="d-flex flex-column justify-content-between h-100 w-100 p-4 overflow-y-auto">
     <!-- Encabezado -->
     <div class="mt-2">
         <div class="d-flex align-items-center gap-2 mb-2">
@@ -51,16 +51,6 @@
             </div>
         </div>
 
-        <!-- Checkbox Switch -->
-        <div class="glass-card p-3 d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-2">
-                <i class="fa-solid fa-location-crosshairs text-success fs-5"></i>
-                <span class="text-white fs-6 fw-medium">Ubicación precisa (GPS)</span>
-            </div>
-            <div class="form-check form-switch m-0">
-                <input class="form-check-input form-check-input-custom" type="checkbox" id="gpsToggle" checked>
-            </div>
-        </div>
     </div>
 
     <!-- Botones de Acción -->

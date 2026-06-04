@@ -1,4 +1,4 @@
-<div class="d-flex flex-column justify-content-between h-100 w-100 p-4 text-center">
+<div class="d-flex flex-column justify-content-between h-100 w-100 p-4 text-center overflow-y-auto">
     <!-- Elemento decorativo superior -->
     <div class="mt-4">
         <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-3 py-2">

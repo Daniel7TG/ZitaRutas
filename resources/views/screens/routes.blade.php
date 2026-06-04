@@ -35,7 +35,7 @@
     </div>
 
     <!-- Contenedor del Mapa Leaflet -->
-    <div class="flex-grow-1" style="position: relative; min-height: 400px;">
+    <div class="flex-grow-1" style="position: relative; min-height: 150px;">
         <div id="leaflet-map"></div>
     </div>
 

@@ -27,7 +27,7 @@
                 </div>
             </div>
             <hr class="border-secondary border-opacity-25 my-2">
-            <div class="row text-center">
+            <div class="row g-0 text-center">
                 <div class="col-4 border-end border-secondary border-opacity-25">
                     <small class="text-muted-custom d-block fs-8 mb-1">Frecuencia</small>
                     <span class="text-success fw-bold fs-6">3 - 5 min</span>

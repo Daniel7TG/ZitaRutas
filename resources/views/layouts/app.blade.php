@@ -132,7 +132,8 @@
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
         }
 
-        html, body {
+        html,
+        body {
             height: 100%;
             margin: 0;
             overflow: hidden;
@@ -146,8 +147,9 @@
 
         .mobile-frame-container {
             width: 100%;
-            height: 100vh;
-            max-height: 100vh;
+            height: 100%;
+            height: 100dvh;
+            max-height: 100dvh;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -161,6 +163,16 @@
             position: relative;
             display: flex;
             flex-direction: column;
+            overflow: hidden;
+        }
+
+        .mobile-app-content>div {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
             overflow: hidden;
         }
 
@@ -694,7 +706,7 @@
         <div class="mobile-app-content" id="app-viewport">
             @yield('content')
         </div>
-        @if(in_array(request()->query('screen', 'welcome'), ['routes', 'routes-list', 'favorites', 'route-detail', 'tracking']))
+        @if (in_array(request()->query('screen', 'welcome'), ['routes', 'routes-list', 'favorites', 'route-detail', 'tracking']))
             @include('partials.bottom-nav')
         @endif
     </div>

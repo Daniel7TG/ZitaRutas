@@ -34,6 +34,48 @@
                 activeTile.addTo(map);
             });
 
+            const userIcon = L.divIcon({
+                className: 'custom-user-icon',
+                html: '<div class="user-pin-glow"></div>',
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+
+            let userMarker = null;
+            let userAccuracyCircle = null;
+
+            if (navigator.geolocation) {
+                navigator.geolocation.watchPosition(
+                    (position) => {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        const accuracy = position.coords.accuracy;
+
+                        if (!userMarker) {
+                            userMarker = L.marker([lat, lng], { icon: userIcon }).addTo(map);
+                            userAccuracyCircle = L.circle([lat, lng], { radius: accuracy, weight: 1, color: '#3b82f6', fillOpacity: 0.1 }).addTo(map);
+                            
+                            const isFocused = @json((bool) $focusedRouteId);
+                            if (activeScreen === 'routes' && !isFocused) {
+                                map.setView([lat, lng], 16);
+                            }
+                        } else {
+                            userMarker.setLatLng([lat, lng]);
+                            userAccuracyCircle.setLatLng([lat, lng]);
+                            userAccuracyCircle.setRadius(accuracy);
+                        }
+                    },
+                    (error) => {
+                        console.warn("GPS:", error.message);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        maximumAge: 0,
+                        timeout: 10000
+                    }
+                );
+            }
+
             if (activeScreen === 'routes') {
                 const realRoutes = @json($realRoutesData);
                 const isFocused = @json((bool) $focusedRouteId);
