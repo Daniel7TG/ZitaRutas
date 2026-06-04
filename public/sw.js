@@ -1,5 +1,5 @@
 // ============================================================
-// ZitaRutas - Service Worker v1.0
+// ZitaRutas - Service Worker 
 // Estrategia: Network First (navegación), Cache First (assets)
 // ============================================================
 
