@@ -37,28 +37,37 @@
         </div>
     </div>
 
-    <!-- Panel inferior de itinerario -->
-    <div id="itinerary-panel" class="glass-card rounded-top-4 border-top-0 p-3"
-         style="background: rgba(13, 17, 26, 0.95); z-index: 5; max-height: 45vh; overflow-y: auto;">
-
-        <!-- Resumen Origen/Destino -->
-        <div class="d-flex align-items-center gap-2 mb-3 pb-3 border-bottom border-secondary border-opacity-25">
-            <div class="d-flex align-items-center gap-2">
-                <div class="bg-success rounded-circle" style="width: 12px; height: 12px;"></div>
-                <span class="text-white fs-8">Tu ubicación</span>
-            </div>
-            <i class="fa-solid fa-arrow-right text-muted-custom fs-8"></i>
-            <div class="d-flex align-items-center gap-2">
-                <div class="bg-danger rounded-circle" style="width: 12px; height: 12px;"></div>
-                <span class="text-white fs-8" id="destination-label">Selecciona destino</span>
+    <!-- Panel deslizable inferior de itinerario (Bottom Sheet) -->
+    <div id="routesBottomSheet" class="routes-bottom-sheet">
+        <!-- Drag Handle con 3 líneas horizontales -->
+        <div class="drag-handle" id="dragHandle">
+            <div class="drag-handle-lines">
+                <span></span>
+                <span></span>
+                <span></span>
             </div>
         </div>
 
-        <!-- Contenedor de itinerario (se llena dinámicamente) -->
-        <div id="itinerary-container">
-            <div class="text-center text-muted-custom py-4">
-                <i class="fa-solid fa-map-location-dot fs-1 mb-2 d-block text-success opacity-50"></i>
-                <p class="fs-8 mb-0">Toca el mapa para seleccionar tu destino</p>
+        <div class="routes-sheet-content" style="max-height: 45vh; overflow-y: auto;">
+            <!-- Resumen Origen/Destino -->
+            <div class="d-flex align-items-center gap-2 mb-3 pb-3 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-success rounded-circle" style="width: 12px; height: 12px;"></div>
+                    <span class="text-white fs-8">Tu ubicación</span>
+                </div>
+                <i class="fa-solid fa-arrow-right text-muted-custom fs-8"></i>
+                <div class="d-flex align-items-center gap-2">
+                    <div class="bg-danger rounded-circle" style="width: 12px; height: 12px;"></div>
+                    <span class="text-white fs-8" id="destination-label">Selecciona destino</span>
+                </div>
+            </div>
+
+            <!-- Contenedor de itinerario (se llena dinámicamente) -->
+            <div id="itinerary-container">
+                <div class="text-center text-muted-custom py-4">
+                    <i class="fa-solid fa-map-location-dot fs-1 mb-2 d-block text-success opacity-50"></i>
+                    <p class="fs-8 mb-0">Toca el mapa para seleccionar tu destino</p>
+                </div>
             </div>
         </div>
     </div>
