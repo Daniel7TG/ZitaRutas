@@ -58,20 +58,12 @@
                 init() {
                     this.bindMapClick();
                     this.setOriginFromGeolocation();
-                    this.bindCalculateButton();
                 },
 
                 bindMapClick() {
                     map.on('click', (e) => {
                         this.setDestination(e.latlng.lat, e.latlng.lng);
                     });
-                },
-
-                bindCalculateButton() {
-                    const btn = document.getElementById('btn-calculate-route');
-                    if (btn) {
-                        btn.addEventListener('click', () => this.calculateRoute());
-                    }
                 },
 
                 setOriginFromGeolocation() {
