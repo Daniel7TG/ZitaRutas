@@ -150,4 +150,7 @@
 @push('scripts')
     @include('partials.map-scripts')
     @include('partials.drag-scripts')
+    @if ($activeScreen === 'route-planner')
+        @include('partials.route-planner-scripts')
+    @endif
 @endpush
