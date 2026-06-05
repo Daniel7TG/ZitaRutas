@@ -1,7 +1,7 @@
 <div class="h-100 w-100 d-flex flex-column p-3">
     <div class="flex-grow-1 overflow-y-auto" style="padding-right: 2px;">
         <!-- Encabezado de Navegación -->
-        <div class="d-flex align-items-center justify-content-between mb-3 mt-2">
+        <div class="d-flex align-items-center justify-content-between mb-3 mt-2" style="padding-right: 58px;">
             <a href="?screen=routes"
                 class="btn btn-dark-secondary p-2 rounded-circle d-flex align-items-center justify-content-center"
                 style="width: 38px; height: 38px;">

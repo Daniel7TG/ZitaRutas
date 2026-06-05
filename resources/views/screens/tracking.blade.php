@@ -1,6 +1,6 @@
 <div class="h-100 w-100 position-relative d-flex flex-column">
     <!-- Botón Flotante Atrás y Titulo -->
-    <div class="position-absolute top-0 left-0 w-100 p-3" style="z-index: 100;">
+    <div class="position-absolute top-0 left-0 w-100 p-3" style="padding-right: 74px !important; z-index: 100;">
         <div class="glass-card p-2 d-flex align-items-center justify-content-between shadow-lg"
             style="background: rgba(13, 17, 26, 0.85);">
             <div class="d-flex align-items-center gap-3">
