@@ -25,9 +25,12 @@
     <!-- Contenedor del Mapa Leaflet -->
     <div class="flex-grow-1" style="position: relative; min-height: 300px;">
         <div id="leaflet-map"></div>
+    </div>
 
+    <!-- Panel deslizable inferior de itinerario (Bottom Sheet) -->
+    <div id="routesBottomSheet" class="routes-bottom-sheet">
         <!-- Instrucción flotante cuando no hay destino -->
-        <div id="map-instruction" class="position-absolute bottom-0 start-50 translate-middle-x mb-3" style="z-index: 50;">
+        <div id="map-instruction" class="position-absolute start-50 translate-middle-x" style="bottom: 100%; margin-bottom: 12px; z-index: 50; width: max-content;">
             <div class="glass-card px-3 py-2 text-center" style="background: rgba(13, 17, 26, 0.9);">
                 <small class="text-muted-custom fs-8">
                     <i class="fa-solid fa-hand-pointer text-success me-1"></i>
@@ -35,10 +38,7 @@
                 </small>
             </div>
         </div>
-    </div>
 
-    <!-- Panel deslizable inferior de itinerario (Bottom Sheet) -->
-    <div id="routesBottomSheet" class="routes-bottom-sheet">
         <!-- Drag Handle con 3 líneas horizontales -->
         <div class="drag-handle" id="dragHandle">
             <div class="drag-handle-lines">
