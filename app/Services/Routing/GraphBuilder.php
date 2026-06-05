@@ -13,7 +13,16 @@ class GraphBuilder
 
     public function build(float $originLat, float $originLng, float $destLat, float $destLng): self
     {
-        $buffer = 0.05;
+        $distanceM = GeoUtils::haversine($originLat, $originLng, $destLat, $destLng);
+        
+        if ($distanceM < 2000) {
+            $buffer = 0.015;
+        } elseif ($distanceM < 5000) {
+            $buffer = 0.03;
+        } else {
+            $buffer = 0.05;
+        }
+
         $minLat = min($originLat, $destLat) - $buffer;
         $maxLat = max($originLat, $destLat) + $buffer;
         $minLng = min($originLng, $destLng) - $buffer;
